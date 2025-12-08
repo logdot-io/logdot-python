@@ -1,6 +1,6 @@
 # Publishing LogDot Python SDK to PyPI
 
-This guide covers publishing the LogDot SDK to the Python Package Index (PyPI).
+This guide covers publishing the LogDot SDK (`logdot-io-sdk`) to the Python Package Index (PyPI).
 
 ## Prerequisites
 
@@ -31,8 +31,8 @@ python -m build
 ```
 
 This creates two files in `dist/`:
-- `logdot-1.0.0.tar.gz` - Source distribution
-- `logdot-1.0.0-py3-none-any.whl` - Built wheel
+- `logdot_io_sdk-1.0.0.tar.gz` - Source distribution
+- `logdot_io_sdk-1.0.0-py3-none-any.whl` - Built wheel
 
 ## Verify Package Contents
 
@@ -68,7 +68,7 @@ twine upload --repository testpypi dist/*
 ### Test Installation from TestPyPI
 
 ```bash
-pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ logdot
+pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ logdot-io-sdk
 ```
 
 Note: `--extra-index-url` is needed because dependencies (like `requests`) aren't on TestPyPI.
@@ -142,9 +142,9 @@ python -m build
 Test installation from the built wheel:
 
 ```bash
-pip install dist/logdot-1.0.0-py3-none-any.whl
-python -c "from logdot import LogDot; print('Success!')"
-pip uninstall logdot
+pip install dist/logdot_io_sdk-1.0.0-py3-none-any.whl
+python -c "from logdot import LogDotLogger; print('Success!')"
+pip uninstall logdot-io-sdk
 ```
 
 ## CI/CD Publishing (Optional)
@@ -181,8 +181,8 @@ jobs:
 
 ## Troubleshooting
 
-### "The user 'xxx' isn't allowed to upload to project 'logdot'"
-The package name is already taken. Choose a different name in `pyproject.toml`.
+### "The user 'xxx' isn't allowed to upload to project 'logdot-io-sdk'"
+The package name is already taken or you don't have permissions. Verify you own the package on PyPI.
 
 ### "File already exists"
 You cannot overwrite an existing version. Bump the version number.

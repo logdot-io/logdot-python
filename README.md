@@ -6,8 +6,8 @@
 </p>
 
 <p align="center">
-  <a href="https://pypi.org/project/logdot/"><img src="https://img.shields.io/pypi/v/logdot?style=flat-square&color=blue" alt="PyPI version"></a>
-  <a href="https://pypi.org/project/logdot/"><img src="https://img.shields.io/pypi/dm/logdot?style=flat-square" alt="PyPI downloads"></a>
+  <a href="https://pypi.org/project/logdot-io-sdk/"><img src="https://img.shields.io/pypi/v/logdot-io-sdk?style=flat-square&color=blue" alt="PyPI version"></a>
+  <a href="https://pypi.org/project/logdot-io-sdk/"><img src="https://img.shields.io/pypi/dm/logdot-io-sdk?style=flat-square" alt="PyPI downloads"></a>
   <a href="https://github.com/logdot-io/logdot-python/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-MIT-green?style=flat-square" alt="MIT License"></a>
   <a href="https://www.python.org/"><img src="https://img.shields.io/badge/python-%3E%3D3.8-blue?style=flat-square&logo=python&logoColor=white" alt="Python 3.8+"></a>
   <a href="https://github.com/python/mypy"><img src="https://img.shields.io/badge/type_hints-ready-blue?style=flat-square" alt="Type Hints"></a>
@@ -34,7 +34,7 @@
 ## Installation
 
 ```bash
-pip install logdot
+pip install logdot-io-sdk
 ```
 
 ## Quick Start

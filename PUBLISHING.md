@@ -68,7 +68,7 @@ twine upload --repository testpypi dist/*
 ### Test Installation from TestPyPI
 
 ```bash
-pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ logdot-io-sdk
+pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/logdot-io-sdk
 ```
 
 Note: `--extra-index-url` is needed because dependencies (like `requests`) aren't on TestPyPI.

@@ -38,6 +38,9 @@ dev = [
     "black>=23.0.0",
     "responses>=0.23.0",
 ]
+django = [
+    "django>=3.2",
+]
 
 [project.urls]
 Homepage = "https://logdot.io"

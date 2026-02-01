@@ -204,6 +204,157 @@ metrics_client.send_batch()
 metrics_client.end_batch()
 ```
 
+## Auto-Instrumentation (Django)
+
+Automatically log all HTTP requests, errors, and response time metrics in Django apps with zero manual logging code.
+
+### Setup
+
+Add to your `settings.py`:
+
+```python
+# Required
+LOGDOT_API_KEY = 'ilog_live_YOUR_API_KEY'
+LOGDOT_HOSTNAME = 'my-django-app'
+
+MIDDLEWARE = [
+    'logdot.django.LogdotMiddleware',
+    # ... your other middleware
+]
+```
+
+### What Gets Captured
+
+- **HTTP requests** — Every request logged with method, path, status code, and duration
+- **Errors** — Unhandled exceptions with full traceback and request context
+- **Metrics** — Response time per endpoint (entity is automatically created/resolved on first request using `LOGDOT_ENTITY_NAME`)
+
+### Configuration
+
+| Setting | Type | Required | Default | Description |
+|---------|------|----------|---------|-------------|
+| `LOGDOT_API_KEY` | str | Yes | — | Your LogDot API key |
+| `LOGDOT_HOSTNAME` | str | Yes | — | Identifies this service in logs |
+| `LOGDOT_ENTITY_NAME` | str | No | hostname | Metrics entity name — automatically created if it doesn't exist |
+| `LOGDOT_DEBUG` | bool | No | `False` | Enable debug output |
+| `LOGDOT_TIMEOUT` | int | No | `5000` | HTTP timeout in ms |
+| `LOGDOT_LOG_REQUESTS` | bool | No | `True` | Enable request logging |
+| `LOGDOT_LOG_METRICS` | bool | No | `True` | Enable duration metrics |
+| `LOGDOT_IGNORE_PATHS` | list | No | `[]` | Paths to skip (e.g. `["/health"]`) |
+| `LOGDOT_CAPTURE_LOGGING` | bool | No | `False` | Forward Python `logging` and `print()` to LogDot |
+
+## Log Capture
+
+Automatically forward Python `logging` calls and `print()` output to LogDot. The original behavior is preserved — logs still appear in your console and log files as usual.
+
+This works in **any Python application** (Flask, FastAPI, scripts, CLI tools, Celery workers, etc.), not just Django.
+
+### Capturing `logging` Output
+
+Forward all stdlib `logging` records to LogDot:
+
+```python
+import logging
+from logdot import LogDotLogger, LogdotLoggingHandler
+
+logger = LogDotLogger(
+    api_key='ilog_live_YOUR_API_KEY',
+    hostname='my-service',
+)
+
+# Attach to the root logger
+handler = LogdotLoggingHandler(logger=logger)
+logging.root.addHandler(handler)
+logging.root.setLevel(logging.DEBUG)
+
+# All logging calls are now sent to LogDot
+logging.info('This goes to LogDot')
+logging.error('Error occurred', exc_info=True)
+```
+
+Log records are mapped to LogDot severity levels:
+
+| Python Level | LogDot Severity |
+|-------------|----------------|
+| `DEBUG` | `debug` |
+| `INFO` | `info` |
+| `WARNING` | `warn` |
+| `ERROR` | `error` |
+| `CRITICAL` | `error` |
+
+Each captured log includes tags with the logger name, file path, line number, and function name. If the record has exception info, the exception type and message are also included.
+
+### Capturing `print()` Output
+
+Forward `print()` calls (stdout and stderr) to LogDot:
+
+```python
+from logdot import LogDotLogger, enable_print_capture, disable_print_capture
+
+logger = LogDotLogger(
+    api_key='ilog_live_YOUR_API_KEY',
+    hostname='my-service',
+)
+
+enable_print_capture(logger=logger)
+
+# print() calls are now sent to LogDot
+print('This goes to LogDot')            # severity: info (stdout)
+print('Error!', file=sys.stderr)        # severity: error (stderr)
+
+# Stop capturing
+disable_print_capture()
+```
+
+### With Django
+
+When using the Django auto-instrumentation, set `LOGDOT_CAPTURE_LOGGING = True` in `settings.py` to enable both `logging` and `print()` capture automatically:
+
+```python
+# settings.py
+LOGDOT_API_KEY = 'ilog_live_YOUR_API_KEY'
+LOGDOT_HOSTNAME = 'my-django-app'
+LOGDOT_CAPTURE_LOGGING = True
+
+MIDDLEWARE = [
+    'logdot.django.LogdotMiddleware',
+    # ...
+]
+```
+
+### How It Works
+
+**`LogdotLoggingHandler`** is a standard `logging.Handler` subclass:
+
+1. Receives `LogRecord` objects from the stdlib logging system
+2. Formats the message and maps the log level to a LogDot severity
+3. Extracts metadata (logger name, file, line, exception info) into tags
+4. Calls the underlying `LogDotLogger` to send to LogDot
+5. A **thread-local recursion guard** prevents infinite loops — when LogDot's HTTP client triggers urllib3/requests logging during delivery, those records are silently skipped
+6. Messages longer than 16KB are truncated
+
+**`enable_print_capture`** wraps `sys.stdout` and `sys.stderr`:
+
+1. Replaces `sys.stdout` and `sys.stderr` with wrapper objects
+2. Each `write()` call forwards to the original stream **and** sends to LogDot
+3. `stdout` writes are sent with severity `info`, `stderr` with severity `error`
+4. Empty/whitespace-only writes are skipped
+5. Same thread-local recursion guard applies
+6. Call `disable_print_capture()` to restore the original streams
+
+### Tags
+
+| Source | Tag | Value |
+|--------|-----|-------|
+| `logging` | `source` | `"python_logging"` |
+| `logging` | `logger_name` | Logger name (e.g. `"myapp.views"`) |
+| `logging` | `pathname` | File path |
+| `logging` | `lineno` | Line number |
+| `logging` | `func_name` | Function name |
+| `logging` | `exception_type` | Exception class name (if present) |
+| `logging` | `exception_message` | Exception message (if present) |
+| `print()` | `source` | `"print"` |
+
 ## API Reference
 
 ### LogDotLogger
@@ -240,10 +391,51 @@ metrics_client.end_batch()
 | `send_batch()` | Send queued metrics |
 | `end_batch()` | End batch mode |
 
+### LogdotLoggingHandler
+
+| Method | Description |
+|--------|-------------|
+| `LogdotLoggingHandler(logger)` | Create handler bound to a `LogDotLogger` instance |
+| `emit(record)` | Forward a `logging.LogRecord` to LogDot (called automatically) |
+
+### Log Capture Functions
+
+| Function | Description |
+|----------|-------------|
+| `enable_print_capture(logger)` | Start forwarding `print()` output to LogDot |
+| `disable_print_capture()` | Restore original `sys.stdout` and `sys.stderr` |
+
 ## Requirements
 
 - Python 3.8+
 - requests >= 2.25.0
+
+## Examples
+
+Create a `.env` file in the repo root with your API key:
+
+```
+LOGDOT_API_KEY=ilog_live_YOUR_API_KEY
+```
+
+### Core SDK test app
+
+Tests logging, metrics, context, and batch operations:
+
+```bash
+cd python
+python examples/test_app.py
+```
+
+### Django hooks test app
+
+Tests Django middleware, logging capture, and print capture:
+
+```bash
+cd python
+pip install django    # if not already installed
+python examples/test_django_app.py
+```
 
 ## License
 

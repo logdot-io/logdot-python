@@ -34,6 +34,7 @@ Example usage:
 
 from logdot.logger import LogDotLogger
 from logdot.metrics import LogDotMetrics, BoundMetricsClient
+from logdot.capture import LogdotLoggingHandler, enable_print_capture, disable_print_capture
 from logdot.types import (
     LogLevel,
     LoggerConfig,
@@ -52,6 +53,10 @@ __all__ = [
     "LogDotLogger",
     "LogDotMetrics",
     "BoundMetricsClient",
+    # Log capture
+    "LogdotLoggingHandler",
+    "enable_print_capture",
+    "disable_print_capture",
     # Types
     "LogLevel",
     "LoggerConfig",
